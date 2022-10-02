@@ -53,6 +53,15 @@ def get_token_auth_header():
     return token
 
 
+def check_permissions(permission, payload):
+    if 'permissions' not in payload:
+        abort(400)
+
+    if permission not in payload['permissions']:
+        abort(403)
+    return True
+
+
 '''
 @TODO implement verify_decode_jwt(token) method
     @INPUTS
