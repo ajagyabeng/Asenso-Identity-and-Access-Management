@@ -78,7 +78,41 @@ def check_permissions(permission, payload):
 
 
 def verify_decode_jwt(token):
-    raise Exception('Not Implemented')
+    """decodes and verifies the token provided"""
+    jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
+    jwks = json.loads(jsonurl.read())  # JSON Web Key Set(jwks)
+    unverified_header = jwt.get_unverified_header(token)
+    rsa_key = {}
+    if 'kid' not in unverified_header:  # 'kid' is The unique identifier for the key.
+        raise AuthError({
+            'code': 'invalid_header',
+            'description': 'Authorization malformed.'
+        }, 401)
+
+    for key in jwks['keys']:
+        if key['kid'] == unverified_header['kid']:
+            rsa_key = {
+                'kty': key['kty'],
+                'kid': key['kid'],
+                'use': key['use'],
+                'n': key['n'],
+                'e': key['e']
+                # 'kty' The family of cryptographic algorithms used with the key.
+                # 'use' How the key was meant to be used; sig represents the signature.
+                # 'n' The modulus for the RSA public key.(https://www.rfc-editor.org/rfc/rfc7518#page-30)
+                # 'e' The exponent for the RSA public key.(https://www.rfc-editor.org/rfc/rfc7518#page-30)
+            }
+    if rsa_key:
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer='https://' + AUTH0_DOMAIN + '/'
+            )
+
+            return payload
 
 
 '''
