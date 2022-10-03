@@ -54,10 +54,12 @@ def full_drink_details(jwt):
 @app.route('/drinks', methods=['POST'])
 @requires_auth('post:drinks')
 def add_drink(jwt):
+    """adds a new drink to database"""
     body = request.get_json()
     try:
         new_title = body.get('title')
         new_recipe = json.dumps(body.get('recipe'))
+        # json.dumps() converts a python object to json string
         new_drink = Drink(title=new_title, recipe=new_recipe)
         new_drink.insert()
         return jsonify({
@@ -71,21 +73,16 @@ def add_drink(jwt):
 @app.route('/drinks/<int:drink_id>', methods=['PATCH'])
 @requires_auth('patch:drinks')
 def edit_drink(jwt, drink_id):
+    """edits the drink title using its' id"""
     body = request.get_json()
     drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
     if not drink:
         abort(404)
     else:
         try:
-            if 'title' in body:
+            if 'title' in body or 'recipe' in body:
                 drink.title = body.get('title')
-                drink.update()
-                return jsonify({
-                    'success': True,
-                    'drinks': drink.long()
-                })
-            elif 'recipe' in body:
-                drink.recipe = json.dumps(body.get('title'))
+                drink.recipe = json.dumps(body.get('recipe'))
                 drink.update()
                 return jsonify({
                     'success': True,
@@ -95,23 +92,25 @@ def edit_drink(jwt, drink_id):
             abort(422)
 
 
-'''
-@TODO implement endpoint
-    DELETE /drinks/<id>
-        where <id> is the existing model id
-        it should respond with a 404 error if <id> is not found
-        it should delete the corresponding row for <id>
-        it should require the 'delete:drinks' permission
-    returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
-        or appropriate status code indicating reason for failure
-'''
+@app.route('/drinks/<int:drink_id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drinks(jwt, drink_id):
+    """deletes drink from database with a given id"""
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if not drink:
+        abort(404)
+    else:
+        try:
+            drink.delete()
+            return jsonify({
+                'success': True,
+                'delete': drink.id
+            })
+        except:
+            abort(422)
 
 
 # Error Handling
-'''
-Example error handling for unprocessable entity
-'''
-
 
 @app.errorhandler(400)
 def unprocessable(error):
