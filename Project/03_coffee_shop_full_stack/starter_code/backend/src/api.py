@@ -24,8 +24,7 @@ CORS(app)
 
 
 @app.route('/drinks', methods=['GET'])
-@requires_auth('get:drinks')
-def short_drink_details(jwt):
+def short_drink_details():
     """returns drinks with summarized details"""
     try:
         drinks = [drink.short() for drink in Drink.query.all()]
