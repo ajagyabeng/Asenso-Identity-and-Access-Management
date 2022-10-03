@@ -37,6 +37,20 @@ def short_drink_details(jwt):
         abort(404)
 
 
+@app.route('/drinks-detail', methods=['GET'])
+@requires_auth('get:drinks')
+def full_drink_details(jwt):
+    """returns drinks with full details"""
+    try:
+        drinks = [drink.long() for drink in Drink.query.all()]
+        return jsonify({
+            'success': True,
+            'drinks': drinks
+        })
+    except:
+        abort(404)
+
+
 '''
 @TODO implement endpoint
     POST /drinks
