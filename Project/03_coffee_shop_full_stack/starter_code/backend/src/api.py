@@ -57,7 +57,7 @@ def add_drink(jwt):
     body = request.get_json()
     try:
         new_title = body.get('title')
-        new_recipe = json.dumps(body.get('recipe'))
+        new_recipe = json.dumps([body.get('recipe')])
         # json.dumps() converts a python object to json string
         new_drink = Drink(title=new_title, recipe=new_recipe)
         new_drink.insert()
@@ -79,9 +79,15 @@ def edit_drink(jwt, drink_id):
         abort(404)
     else:
         try:
-            if 'title' in body or 'recipe' in body:
+            if 'title' in body:
                 drink.title = body.get('title')
-                drink.recipe = json.dumps(body.get('recipe'))
+                drink.update()
+                return jsonify({
+                    'success': True,
+                    'drinks': [drink.long()]
+                })
+            elif 'recipe' in body:
+                drink.recipe = json.dumps([body.get('recipe')])
                 drink.update()
                 return jsonify({
                     'success': True,
@@ -118,6 +124,15 @@ def unprocessable(error):
         "error": 400,
         "message": "bad request. check request body"
     }), 400
+
+
+@app.errorhandler(401)
+def unprocessable(error):
+    return jsonify({
+        "success": False,
+        "error": 401,
+        "message": "Authorization Error"
+    }), 401
 
 
 @app.errorhandler(404)
